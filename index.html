@@ -316,7 +316,7 @@
                                 <i data-lucide="layers" class="w-8 h-8"></i>
                             </div>
                             <h3 class="text-xl font-bold text-primary mb-3">Yedek Parça</h3>
-                            <p class="text-gray-500 text-sm leading-relaxed">Tüm marka ve model araçlar için orijinal, garantili yedek parça temini.</p>
+                            <p class="text-gray-500 text-sm leading-relaxed">Tüm marka ve model araçlar için orijinal yedek parça temini.</p>
                         </div>
                     </div>
                 </div>
@@ -573,23 +573,9 @@
                             <button onclick="setAdminFilter('all')" id="filterAll" class="flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap">Tümü</button>
                         </div>
                         <div class="flex gap-2 w-full sm:w-auto">
-                            <button id="manageAdminsToggle" class="flex-1 sm:flex-none px-4 py-2 bg-white border rounded-lg text-gray-600 hover:bg-gray-50 font-medium transition text-sm">Adminler</button>
                             <button onclick="signOutAndReturn()" class="flex-1 sm:flex-none px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-red-600 hover:bg-red-100 font-medium transition text-sm">Çıkış</button>
                         </div>
                     </div>
-                </div>
-
-                <div id="adminManagementArea" class="bg-white rounded-xl border border-gray-200 p-6 mb-6 shadow-sm hidden">
-                    <h3 class="text-lg font-bold text-primary mb-3">Admin Yönetimi</h3>
-                    <p class="text-sm text-gray-500 mb-4">Yetkili kişi ekle veya çıkar.</p>
-                    <div class="flex gap-2 mb-4">
-                        <input id="newAdminEmail" type="email" placeholder="yeniadmin@mail.com" class="p-3 border rounded-xl w-full text-sm" />
-                        <button id="addAdminBtn" class="px-5 py-2 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-light transition">Ekle</button>
-                    </div>
-                    <div id="adminList" class="space-y-2 text-sm bg-gray-50 p-4 rounded-xl border border-gray-100">
-                        <div class="text-gray-400 text-center">Yükleniyor...</div>
-                    </div>
-                    <p id="adminMgmtMsg" class="text-sm mt-3 hidden font-medium"></p>
                 </div>
                 
                 <div id="adminMobileCards" class="md:hidden space-y-4">
@@ -745,7 +731,7 @@
                     }
                 } else {
                     buttonsHtml = `<span class="text-xs text-gray-400">Yetkisiz</span>`;
-                }                 
+                }                  
 
                 // --- 1. MASAÜSTÜ TABLO SATIRI (Desktop Row) ---
                 const tr = document.createElement('tr');
@@ -1020,63 +1006,6 @@
                     passwordResetMessage.textContent = err.message;
                     passwordResetMessage.classList.add('text-red-500');
                 }
-            });
-        }
-
-        // ADMIN MGMT
-        const adminListDiv = document.getElementById('adminList');
-        const addAdminBtn = document.getElementById('addAdminBtn');
-        const newAdminEmail = document.getElementById('newAdminEmail');
-        const adminMgmtMsg = document.getElementById('adminMgmtMsg');
-        const adminDocRef = doc(db, 'artifacts', appId, 'private', 'meta', 'admins', 'adminList');
-        
-        onSnapshot(adminDocRef, (snap) => {
-            const data = snap.exists() ? snap.data() : { emails: [] };
-            adminEmails = data.emails || [];
-            if (adminListDiv) {
-                adminListDiv.innerHTML = '';
-                if (adminEmails.length === 0) adminListDiv.innerHTML = '<div class="text-gray-400">Henüz admin yok.</div>';
-                adminEmails.forEach(email => {
-                    const row = document.createElement('div');
-                    row.className = 'flex justify-between items-center bg-gray-50 p-2 rounded';
-                    row.innerHTML = `<div>${email}</div><button data-email="${email}" class="px-3 py-1 text-sm rounded border remove-admin-btn">Kaldır</button>`;
-                    adminListDiv.appendChild(row);
-                });
-                adminListDiv.querySelectorAll('.remove-admin-btn').forEach(btn => {
-                    btn.onclick = async () => {
-                        if (!isAdminUser(auth.currentUser)) { alert('Yetkisiz işlem.'); return; }
-                        const email = btn.getAttribute('data-email');
-                        if (!confirm('Silinsin mi?')) return;
-                        try {
-                            await updateDoc(adminDocRef, { emails: arrayRemove(email) });
-                        } catch (err) { alert(err.message); }
-                    };
-                });
-            }
-        });
-
-        if (addAdminBtn) {
-            addAdminBtn.addEventListener('click', async () => {
-                if (!isAdminUser(auth.currentUser)) { alert('Yetkisiz işlem.'); return; }
-                const email = (newAdminEmail || {}).value;
-                if (!email) return;
-                try {
-                    try { await updateDoc(adminDocRef, { emails: arrayUnion(email) }); } 
-                    catch (err) { if (err.code === 'not-found') await setDoc(adminDocRef, { emails: [email] }); else throw err; }
-                    newAdminEmail.value = '';
-                    adminMgmtMsg.textContent = 'Admin eklendi.';
-                    adminMgmtMsg.classList.remove('hidden');
-                } catch (err) {
-                    adminMgmtMsg.textContent = err.message;
-                    adminMgmtMsg.classList.remove('hidden');
-                }
-            });
-        }
-
-        const manageAdminsToggle = document.getElementById('manageAdminsToggle');
-        if (manageAdminsToggle) {
-            manageAdminsToggle.addEventListener('click', () => {
-                document.getElementById('adminManagementArea').classList.toggle('hidden');
             });
         }
 
